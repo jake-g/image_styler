@@ -2,3 +2,4 @@
 *.jpg
 .idea/
 __pycache__/
+*.egg-info/

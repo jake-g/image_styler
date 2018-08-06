@@ -9,6 +9,7 @@ from tensorflow.python.keras.preprocessing import image
 
 tf.enable_eager_execution()
 print("Eager execution: {}".format(tf.executing_eagerly()))
+plt.rcParams["axes.grid"] = False
 
 # Set up some global values here
 IMG_SHAPE = (512, 512, 3)
@@ -200,6 +201,7 @@ def run_style_transfer(content_path,
     norm_means = np.array([103.939, 116.779, 123.68])
     min_vals = -norm_means
     max_vals = 255 - norm_means
+    print('Running style transfer for %d iterations...' % num_iterations)
     for i in range(num_iterations):
         grads, all_loss = compute_grads(cfg)
         loss, style_score, content_score = all_loss
@@ -215,34 +217,35 @@ def run_style_transfer(content_path,
             best_img = init_image.numpy()
 
         if i % display_num == 0:
-            print('Iteration: {}'.format(i))
-            print('Total loss: {:.4e}, '
+            print('Iteration: {:03d}:  '
+                  'Total loss: {:.4e}, '
                   'style loss: {:.4e}, '
                   'content loss: {:.4e}, '
-                  'time: {:.4f}s'.format(loss, style_score, content_score, time.time() - start_time))
+                  'time: {:.4f}s'.format(i, loss, style_score, content_score, time.time() - start_time))
             start_time = time.time()
 
             # Display intermediate images
-            if iter_count > num_rows * 5: continue
-            if show_plots:
+            if iter_count > num_rows * 5:
+                continue
+            elif show_plots:
                 plt.subplot(num_rows, 5, iter_count)
                 # Use the .numpy() method to get the concrete numpy array
                 plot_img = init_image.numpy()
                 plot_img = deprocess_img(plot_img)
                 plt.imshow(plot_img)
                 plt.title('Iteration {}'.format(i + 1))
-            iter_count += 1
+                iter_count += 1
+
     print('Total time: {:.4f}s'.format(time.time() - global_start))
     print('Best Loss: {:.1f}'.format(best_loss))
 
     if show_plots:
+        plt.show()
         show_results(best_img, content_path, style_path, show_large_final=True)
 
     if output_img:
         x = deprocess_img(best_img)
         save_image(x, output_img)
-
-    return best_img
 
 
 def load_and_process_img(path_to_img):
@@ -278,33 +281,32 @@ def load_img(path_to_img):
     return img
 
 
-def show_image(img, title=None):
-    # Remove the batch dimension
-    out = np.squeeze(img, axis=0)
-    # Normalize for display
-    out = out.astype('uint8')
-    plt.figure(figsize=(10, 10))
-    if title is not None:
-        plt.title(title)
-    plt.imshow(out)
-
-
 def save_image(img, output_file):
     plt.imsave(output_file, img.astype('uint8'))
 
 
-def show_results(img, content_path, style_path, show_large_final=True, show_all=False):
+def show_results(img, content_path, style_path, show_large_final=True, show_all=True):
+    def imshow(img, title=None):
+        # Remove the batch dimension
+        out = np.squeeze(img, axis=0)
+        # Normalize for display
+        out = out.astype('uint8')
+        plt.imshow(out)
+        if title is not None:
+            plt.title(title)
+        plt.imshow(out)
+
     x = deprocess_img(img)
 
     if show_all:
-        plt.figure(figsize=(15, 15))
         content = load_img(content_path)
         style = load_img(style_path)
+
         plt.subplot(1, 3, 1)
-        show_image(content, 'Content Image')
+        imshow(content, 'Content Image')
 
         plt.subplot(1, 3, 2)
-        show_image(style, 'Style Image')
+        imshow(style, 'Style Image')
 
         plt.subplot(1, 3, 3)
         plt.imshow(x)
@@ -312,14 +314,14 @@ def show_results(img, content_path, style_path, show_large_final=True, show_all=
         plt.show()
 
     if show_large_final:
-        plt.figure(figsize=(10, 10))
-
+        plt.figure()
+        plt.figure(figsize=(15, 15))
         plt.imshow(x)
-        plt.title('Output Image')
+        plt.axis('off')
         plt.show()
 
 
-if __name__ == "__main__":
+def main():
     import argparse
 
     # Default args
@@ -370,3 +372,7 @@ if __name__ == "__main__":
         style_weight=style_weight,
         show_plots=show_plots
     )
+
+
+if __name__ == "__main__":
+    main()
