@@ -9,3 +9,4 @@ setup(name='neural_image_styler',
       license='MIT',
       packages=['neural_image_styler'],
       zip_safe=False)
+
